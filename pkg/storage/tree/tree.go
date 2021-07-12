@@ -89,6 +89,48 @@ func (t *Tree) Merge(srcTrieI merge.Merger) {
 	}
 }
 
+func (t *Tree) Diff(srcTrieI *Tree) (sumTree, diffTree *Tree) {
+	srcTrie := srcTrieI
+	srcTrie.m.RLock()
+	defer srcTrie.m.RUnlock()
+	t.m.Lock()
+	defer t.m.Unlock()
+
+	sumTree = &Tree{root: t.root.clone(1, 1)}
+	diffTree = &Tree{root: t.root.clone(1, 1)}
+
+	srcNodes := []*treeNode{srcTrie.root}
+	dstNodes := []*treeNode{sumTree.root}
+	dffNodes := []*treeNode{diffTree.root}
+
+	for len(srcNodes) > 0 {
+		st := srcNodes[0]
+		srcNodes = srcNodes[1:]
+
+		// calculate sum
+		dt := dstNodes[0]
+		dstNodes = dstNodes[1:]
+		dt.Self += st.Self
+		dt.Total += st.Total
+
+		// calculate diff
+		df := dffNodes[0]
+		dffNodes = dffNodes[1:]
+		df.Self -= st.Self // uint64 should be int64
+		df.Total -= st.Total
+
+		for _, srcChildNode := range st.ChildrenNodes {
+			dstChildNode := dt.insert(srcChildNode.Name)
+			dffChildNode := df.insert(srcChildNode.Name)
+
+			srcNodes = append([]*treeNode{srcChildNode}, srcNodes...)
+			dstNodes = append([]*treeNode{dstChildNode}, dstNodes...)
+			dffNodes = append([]*treeNode{dffChildNode}, dffNodes...)
+		}
+	}
+	return sumTree, diffTree
+}
+
 func (t *Tree) String() string {
 	t.m.RLock()
 	defer t.m.RUnlock()
