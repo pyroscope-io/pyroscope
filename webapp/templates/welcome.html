@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+    body {
+      padding-top: 30px;
+    }
+
+    h1 {
+      color: blue;
+    }
+    
+    a {
+      text-decoration: none;
+    }
+
+    section {
+      background-color: rgb(29, 20, 39);
+      display: flex;
+      height: 250px;
+      width: 450px;
+      justify-content: center;
+      margin: auto;
+
+    }
+
+    .container {
+      position: inherit;
+      margin: auto;
+      align-content: center;
+    }
+
+    .pyroscope-button {
+      height: 30px;
+      width: 400px;
+      border-radius: 2px;
+      margin-bottom: 8px;
+    }
+
+    #btn-pyroscope {
+      text-align: center;
+
+      font-size: 16px;
+
+      border-right: #BB3F30 1px solid;
+      background-size: 20px;
+
+      border: 1px solid transparent;
+      background-color: #ea4235;
+      line-height: 30px;
+    }
+  </style>
+
+<link rel="icon" href="build/images/favicon.ico">
+</head>
+
+<body background="https://play.grafana.org/public/img/g8_login_dark.svg">
+
+  <section>
+
+    <div class="container">
+
+
+    <p style="text-align:center; color:white"> Logged in with {{.Name}} </p>
+
+    <div class="pyroscope-button" id="btn-pyroscope">
+        <a href="/" style="color:white" class="btn btn-danger"> Go to Pyroscope</a>
+      </div>
+
+
+
+    </div>
+  </section>
+
+</body>
+
+</html>

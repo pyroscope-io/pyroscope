@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+    body {
+      padding-top: 30px;
+    }
+
+    h1 {
+      color: blue;
+    }
+    
+    a {
+      text-decoration: none;
+    }
+
+    section {
+      background-color: rgb(29, 20, 39);
+      display: flex;
+      height: 250px;
+      width: 450px;
+      justify-content: center;
+      margin: auto;
+
+    }
+
+    .sign-in-button {
+      height: 30px;
+      width: 400px;
+      border-radius: 2px;
+      margin-bottom: 8px;
+    }
+
+    #btn-google {
+      text-align: center;
+
+      font-size: 16px;
+
+      border-right: #BB3F30 1px solid;
+      background: url('https://pics.freeicons.io/uploads/icons/png/149250811530100220-512.png') 6px 6px no-repeat;
+      background-size: 20px;
+
+      border: 1px solid transparent;
+      background-color: #ea4235;
+      line-height: 30px;
+    }
+
+    #btn-github {
+      text-align: center;
+
+      font-size: 16px;
+
+      border-right: #BB3F30 1px solid;
+      background: url('https://camo.githubusercontent.com/4133dc1cd4511d4a292b84ce10e52e4ed92569fb2a8165381c9c47be5edc2796/68747470733a2f2f6564656e742e6769746875622e696f2f537570657254696e7949636f6e732f696d616765732f706e672f6769746875622e706e67') 6px 6px no-repeat;
+      background-size: 20px;
+
+
+      border: 1px solid transparent;
+      background-color: #444444;
+      line-height: 30px;
+    }
+
+    #btn-gitlab {
+      text-align: center;
+
+      font-size: 16px;
+
+      border-right: #BB3F30 1px solid;
+      background: url('https://about.gitlab.com/images/press/logo/png/gitlab-icon-rgb.png') 6px 6px no-repeat;
+      background-size: 20px;
+
+      border: 1px solid transparent;
+      background-color: #554488;
+      line-height: 30px;
+    }
+
+    .container {
+      position: inherit;
+      margin: auto;
+      align-content: center;
+    }
+  </style>
+
+<link rel="icon" href="build/images/favicon.ico">
+</head>
+
+<body background="https://play.grafana.org/public/img/g8_login_dark.svg">
+
+  <section>
+
+    <div class="container">
+
+
+      <div {{if not .GoogleEnabled}} style="display: none" {{end}} class="sign-in-button" id="btn-google">
+        <a id="google-link" href="/google/login" style="color:white" class="btn btn-danger"> SignIn with Google</a>
+      </div>
+
+
+      <div {{if not .GithubEnabled}} style="display: none" {{end}} class="sign-in-button" id="btn-github">
+        <a id="github-link" href="github/login" style="color:white" class="btn btn-danger">SignIn with GitHub</a>
+      </div>
+
+
+      <div {{if not .GitlabEnabled}} style="display: none" {{end}} class="sign-in-button" id="btn-gitlab">
+        <a id="gitlab-link" href="gitlab/login" style="color:white" class="btn btn-danger">SignIn with GitLab</a>
+      </div>
+
+
+
+
+
+    </div>
+  </section>
+
+  <script>
+    var has_tls = false
+    if (location.protocol === 'https:') {
+      has_tls = true
+    }
+    
+    document.getElementById('google-link').href += '?tls=' + has_tls
+    document.getElementById('github-link').href += '?tls=' + has_tls
+    document.getElementById('gitlab-link').href += '?tls=' + has_tls
+  </script>
+
+</body>
+
+</html>

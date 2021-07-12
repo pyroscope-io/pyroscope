@@ -80,6 +80,31 @@ type Server struct {
 	CacheDictionarySize int               `deprecated:"true"`
 	CacheSegmentSize    int               `deprecated:"true"`
 	CacheTreeSize       int               `deprecated:"true"`
+
+	GoogleEnabled      bool   `def:"false" desc:"enables Google Oauth"`
+	GoogleClientID     string `def:"<yourClientID>" desc:"client ID generated for Google API"`
+	GoogleClientSecret string `def:"<yourClientSecret>" desc:"client secret generated for Google API"`
+	GoogleRedirectURL  string `def:"" desc:"url that google will redirect to after logging in. Has to be in form <pathToPyroscopeServer/google/callback>"`
+	GoogleAuthURL      string `def:"https://accounts.google.com/o/oauth2/auth" desc:"auth url for Google API (usually present in credentials.json file)"`
+	GoogleTokenURL     string `def:"https://accounts.google.com/o/oauth2/token" desc:"token url for Google API (usually present in credentials.json file)"`
+
+	GitlabEnabled       bool   `def:"false" desc:"enables Gitlab Oauth"`
+	GitlabApplicationID string `def:"<yourApplicationID>" desc:"application ID generated for GitLab API"`
+	GitlabClientSecret  string `def:"<yourClientSecret>" desc:"client secret generated for GitLab API"`
+	GitlabRedirectURL   string `def:"" desc:"url that gitlab will redirect to after logging in. Has to be in form <pathToPyroscopeServer/gitlab/callback>"`
+	GitlabAuthURL       string `def:"https://gitlab.com/oauth/authorize" desc:"auth url for GitLab API (keep default for cloud, usually https://gitlab.mycompany.com/oauth/authorize for on-premise)"`
+	GitlabTokenURL      string `def:"https://gitlab.com/oauth/token" desc:"token url for GitLab API (keep default for cloud, usually https://gitlab.mycompany.com/oauth/token for on-premise)"`
+	GitlabAPIURL        string `def:"https://gitlab.com/api/v4/user" desc:"URL to gitlab API (keep default for cloud, usually https://gitlab.mycompany.com/api/v4/user for on-premise)"`
+
+	GithubEnabled      bool   `def:"false" desc:"enables Github Oauth"`
+	GithubClientID     string `def:"<yourClientID>" desc:"client ID generated for Github API"`
+	GithubClientSecret string `def:"<yourClientSecret>" desc:"client secret generated for Github API"`
+	GithubRedirectURL  string `def:"" desc:"url that Github will redirect to after logging in. Has to be in form <pathToPyroscopeServer/github/callback>"`
+	GithubAuthURL      string `def:"https://github.com/login/oauth/authorize" desc:"auth url for Github API"`
+	GithubTokenURL     string `def:"https://github.com/login/oauth/access_token" desc:"token url for Github API"`
+
+	JWTSecret                string `def:"" desc:"secret used to secure your JWT tokens"`
+	LoginMaximumLifetimeDays int    `def:"0" desc:"amount of days after which user will be logged out. 0 means non-expiring."`
 }
 
 type Convert struct {

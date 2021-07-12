@@ -16,6 +16,7 @@ import (
 	"github.com/pyroscope-io/pyroscope/pkg/server"
 	"github.com/pyroscope-io/pyroscope/pkg/storage"
 	"github.com/pyroscope-io/pyroscope/pkg/testing"
+	"github.com/sirupsen/logrus"
 )
 
 const durThreshold = 30 * time.Millisecond
@@ -54,7 +55,7 @@ var _ = Describe("analytics", func() {
 					s, err := storage.New(&(*cfg).Server)
 					Expect(err).ToNot(HaveOccurred())
 
-					c, _ := server.New(&(*cfg).Server, s)
+					c, _ := server.New(&(*cfg).Server, s, logrus.New())
 					analytics := NewService(&(*cfg).Server, s, c)
 
 					startTime := time.Now()

@@ -46,7 +46,7 @@ func newServerService(logger *logrus.Logger, c *config.Server) (*serverService, 
 	if err != nil {
 		return nil, fmt.Errorf("new storage: %v", err)
 	}
-	svc.controller, err = server.New(svc.config, svc.storage)
+	svc.controller, err = server.New(svc.config, svc.storage, svc.logger)
 	if err != nil {
 		return nil, fmt.Errorf("new server: %v", err)
 	}
