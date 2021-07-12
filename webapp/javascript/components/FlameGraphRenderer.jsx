@@ -93,12 +93,6 @@ class FlameGraphRenderer extends React.Component {
         "Reset Flamegraph View"
       );
     }
-
-    if(this.props.viewSide === 'left' || this.props.viewSide === 'right') {
-      this.fetchFlameBearerData(this.props[`${this.props.viewSide}RenderURL`])
-    } else {
-      this.fetchFlameBearerData(this.props.renderURL)
-    }
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -108,12 +102,13 @@ class FlameGraphRenderer extends React.Component {
       prevProps.maxNodes != this.props.maxNodes ||
       prevProps.refreshToken != this.props.refreshToken ||
       prevProps[`${this.props.viewSide}From`] != this.props[`${this.props.viewSide}From`] ||
-      prevProps[`${this.props.viewSide}Until`] != this.props[`${this.props.viewSide}Until`]
+      prevProps[`${this.props.viewSide}Until`] != this.props[`${this.props.viewSide}Until`] ||
+      prevProps.flamebearer != this.props.flamebearer    
     ) {
       if(this.props.viewSide === 'left' || this.props.viewSide === 'right') {
-        this.fetchFlameBearerData(this.props[`${this.props.viewSide}RenderURL`])
+        this.updateFlameBearerData(this.props[`${this.props.viewSide}RenderURL`], this.props.flamebearer)
       } else {
-        this.fetchFlameBearerData(this.props.renderURL)
+        this.updateFlameBearerData(this.props.renderURL, this.props.flamebearer)
       }
     }
 
@@ -125,25 +120,32 @@ class FlameGraphRenderer extends React.Component {
     }
   }
 
-  fetchFlameBearerData(url) {
+  updateFlameBearerData(url, flamebearer) {
     if (this.currentJSONController) {
       this.currentJSONController.abort();
     }
     this.currentJSONController = new AbortController();
-
-    fetch(`${url}&format=json`, { signal: this.currentJSONController.signal })
-      .then((response) => response.json())
-      .then((data) => {
-        let flamebearer = data.flamebearer;
-        deltaDiff(flamebearer.levels);
-
-        this.setState({
-          flamebearer: flamebearer
-        }, () => {
-          this.updateData();
+    if (!flamebearer) {
+      fetch(`${url}&format=json`, { signal: this.currentJSONController.signal })
+        .then((response) => response.json())
+        .then((data) => {
+          let flamebearer = data.flamebearer;
+          deltaDiff(flamebearer.levels);
+  
+          this.setState({
+            flamebearer: flamebearer
+          }, () => {
+            this.updateData();
+          })
         })
+        .finally();
+    } else {
+      this.setState({
+        flamebearer: flamebearer
+      }, () => {
+        this.updateData();
       })
-      .finally();
+    }
   }
 
   getParamsFromRenderURL(inputURL) {

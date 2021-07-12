@@ -1,4 +1,5 @@
 import uniqBy from "lodash/fp/uniqBy";
+import { deltaDiffImmutable } from "../../util/flamebearer";
 import {
   SET_DATE_RANGE,
   SET_FROM,
@@ -133,6 +134,7 @@ export default function (state = initialState, action) {
     case RECEIVE_TIMELINE:
       return {
         ...state,
+        flamebearer: deltaDiffImmutable(action.payload.flamebearer),
         timeline: decodeTimelineData(action.payload.timeline),
         isJSONLoading: false,
       };

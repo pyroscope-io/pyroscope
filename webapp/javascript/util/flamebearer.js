@@ -26,3 +26,16 @@ export function deltaDiff(levels) {
     }
   }
 }
+
+export function deltaDiffImmutable(flamebearer) {
+  const levels =  flamebearer.levels.map((level) => {
+    let prev = 0;
+    for (let i = 0; i < level.length; i += 4) {
+      level[i] += prev;
+      prev = level[i] + level[i + 1];
+    }
+    return level;
+  });
+
+  return {...flamebearer, levels };
+}
