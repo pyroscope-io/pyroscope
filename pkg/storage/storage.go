@@ -10,14 +10,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dgraph-io/badger/v2"
-	"github.com/dgraph-io/badger/v2/options"
 	"github.com/sirupsen/logrus"
 
 	"github.com/pyroscope-io/pyroscope/pkg/config"
 	"github.com/pyroscope-io/pyroscope/pkg/storage/cache"
 	"github.com/pyroscope-io/pyroscope/pkg/storage/dict"
 	"github.com/pyroscope-io/pyroscope/pkg/storage/dimension"
+	"github.com/pyroscope-io/pyroscope/pkg/storage/kv"
+	"github.com/pyroscope-io/pyroscope/pkg/storage/kv/badger"
 	"github.com/pyroscope-io/pyroscope/pkg/storage/labels"
 	"github.com/pyroscope-io/pyroscope/pkg/storage/segment"
 	"github.com/pyroscope-io/pyroscope/pkg/storage/tree"
@@ -49,41 +49,16 @@ type Storage struct {
 	trees      *cache.Cache
 	labels     *labels.Labels
 
-	db           *badger.DB
-	dbTrees      *badger.DB
-	dbDicts      *badger.DB
-	dbDimensions *badger.DB
-	dbSegments   *badger.DB
+	db           kv.Storage
+	dbTrees      kv.Storage
+	dbDicts      kv.Storage
+	dbDimensions kv.Storage
+	dbSegments   kv.Storage
 
 	localProfilesDir string
 
 	stop chan struct{}
 	wg   sync.WaitGroup
-}
-
-func (s *Storage) newBadger(name string) (*badger.DB, error) {
-	badgerPath := filepath.Join(s.config.StoragePath, name)
-	err := os.MkdirAll(badgerPath, 0o755)
-	if err != nil {
-		return nil, err
-	}
-	badgerOptions := badger.DefaultOptions(badgerPath)
-	badgerOptions = badgerOptions.WithTruncate(!s.config.BadgerNoTruncate)
-	badgerOptions = badgerOptions.WithSyncWrites(false)
-	badgerOptions = badgerOptions.WithCompactL0OnClose(false)
-	badgerOptions = badgerOptions.WithCompression(options.ZSTD)
-	badgerLevel := logrus.ErrorLevel
-	if l, err := logrus.ParseLevel(s.config.BadgerLogLevel); err == nil {
-		badgerLevel = l
-	}
-	badgerOptions = badgerOptions.WithLogger(badgerLogger{name: name, logLevel: badgerLevel})
-	db, err := badger.Open(badgerOptions)
-	if err != nil {
-		return nil, err
-	}
-	s.wg.Add(1)
-	go s.periodicTask(gcInterval, s.badgerGCTask(db))
-	return db, nil
 }
 
 func New(c *config.Server) (*Storage, error) {
@@ -93,24 +68,53 @@ func New(c *config.Server) (*Storage, error) {
 		localProfilesDir: filepath.Join(c.StoragePath, "local-profiles"),
 	}
 	var err error
-	s.db, err = s.newBadger("main")
+	s.db, err = badger.NewService(&badger.Config{
+		Name:        "main",
+		StoragePath: c.StoragePath,
+		NoTruncate:  c.BadgerNoTruncate,
+		LogLevel:    c.BadgerLogLevel,
+	})
 	if err != nil {
 		return nil, err
 	}
 	s.labels = labels.New(s.db)
-	s.dbTrees, err = s.newBadger("trees")
+
+	s.dbTrees, err = badger.NewService(&badger.Config{
+		Name:        "trees",
+		StoragePath: c.StoragePath,
+		NoTruncate:  c.BadgerNoTruncate,
+		LogLevel:    c.BadgerLogLevel,
+	})
 	if err != nil {
 		return nil, err
 	}
-	s.dbDicts, err = s.newBadger("dicts")
+
+	s.dbDicts, err = badger.NewService(&badger.Config{
+		Name:        "dicts",
+		StoragePath: c.StoragePath,
+		NoTruncate:  c.BadgerNoTruncate,
+		LogLevel:    c.BadgerLogLevel,
+	})
 	if err != nil {
 		return nil, err
 	}
-	s.dbDimensions, err = s.newBadger("dimensions")
+
+	s.dbDimensions, err = badger.NewService(&badger.Config{
+		Name:        "dimensions",
+		StoragePath: c.StoragePath,
+		NoTruncate:  c.BadgerNoTruncate,
+		LogLevel:    c.BadgerLogLevel,
+	})
 	if err != nil {
 		return nil, err
 	}
-	s.dbSegments, err = s.newBadger("segments")
+
+	s.dbSegments, err = badger.NewService(&badger.Config{
+		Name:        "segments",
+		StoragePath: c.StoragePath,
+		NoTruncate:  c.BadgerNoTruncate,
+		LogLevel:    c.BadgerLogLevel,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +196,7 @@ func (s *Storage) treeFromBytes(k string, v []byte) (interface{}, error) {
 	key := FromTreeToDictKey(k)
 	d, err := s.dicts.Get(key)
 	if err != nil {
-		return nil, fmt.Errorf("dicts cache for %v: %v", key, err)
+		return nil, fmt.Errorf("dicts cache for %v: %w", key, err)
 	}
 	if d == nil {
 		// The key not found. Fallback to segment key form which has been
@@ -206,7 +210,7 @@ func (s *Storage) treeFromBytesFallback(k string, v []byte) (interface{}, error)
 	key := FromTreeToMainKey(k)
 	d, err := s.dicts.Get(key)
 	if err != nil {
-		return nil, fmt.Errorf("dicts cache for %v: %v", key, err)
+		return nil, fmt.Errorf("dicts cache for %v: %w", key, err)
 	}
 	if d == nil { // key not found
 		return nil, nil
@@ -218,7 +222,7 @@ func (s *Storage) treeBytes(k string, v interface{}) ([]byte, error) {
 	key := FromTreeToDictKey(k)
 	d, err := s.dicts.Get(key)
 	if err != nil {
-		return nil, fmt.Errorf("dicts cache for %v: %v", key, err)
+		return nil, fmt.Errorf("dicts cache for %v: %w", key, err)
 	}
 	if d == nil { // key not found
 		return nil, nil
@@ -251,7 +255,9 @@ func (s *Storage) Put(po *PutInput) error {
 	}).Debug("storage.Put")
 
 	for k, v := range po.Key.labels {
-		s.labels.Put(k, v)
+		if err := s.labels.Put(k, v); err != nil {
+			return fmt.Errorf("labels put for %v: %w", k, err)
+		}
 	}
 
 	sk := po.Key.SegmentKey()
@@ -269,7 +275,7 @@ func (s *Storage) Put(po *PutInput) error {
 
 	res, err := s.segments.Get(sk)
 	if err != nil {
-		return fmt.Errorf("segments cache for %v: %v", sk, err)
+		return fmt.Errorf("segments cache for %v: %w", sk, err)
 	}
 	if res == nil {
 		return fmt.Errorf("segments cache for %v: not found", sk)

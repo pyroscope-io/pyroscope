@@ -6,14 +6,13 @@ import (
 	"sync"
 
 	"github.com/dgrijalva/lfu-go"
+	"github.com/pyroscope-io/pyroscope/pkg/storage/kv"
 	"github.com/pyroscope-io/pyroscope/pkg/util/metrics"
 	"github.com/sirupsen/logrus"
-
-	"github.com/dgraph-io/badger/v2"
 )
 
 type Cache struct {
-	db     *badger.DB
+	db     kv.Storage
 	lfu    *lfu.Cache
 	prefix string
 
@@ -34,7 +33,7 @@ type Cache struct {
 	New func(k string) interface{}
 }
 
-func New(db *badger.DB, prefix, humanReadableName string) *Cache {
+func New(db kv.Storage, prefix, humanReadableName string) *Cache {
 	evictionChannel := make(chan lfu.Eviction)
 	writeBackChannel := make(chan lfu.Eviction)
 
@@ -62,7 +61,6 @@ func New(db *badger.DB, prefix, humanReadableName string) *Cache {
 	}
 
 	// start a goroutine for saving the evicted cache items to disk
-
 	go func() {
 		for {
 			e, ok := <-evictionChannel
@@ -74,7 +72,7 @@ func New(db *badger.DB, prefix, humanReadableName string) *Cache {
 		cache.evictionsDone <- struct{}{}
 	}()
 
-	// start a goroutine for saving the evicted cache items to disk
+	// start a goroutine for saving the write-back cache items to disk
 	go func() {
 		for {
 			e, ok := <-writeBackChannel
@@ -103,10 +101,8 @@ func (cache *Cache) saveToDisk(key string, val interface{}) error {
 	}
 
 	metrics.Count(cache.storageWriteCounter, 1)
-	// update the kv to badger
-	if err := cache.db.Update(func(txn *badger.Txn) error {
-		return txn.SetEntry(badger.NewEntry([]byte(cache.prefix+key), buf))
-	}); err != nil {
+	// update the kv to db
+	if err := cache.db.Set([]byte(cache.prefix+key), buf); err != nil {
 		return fmt.Errorf("save to disk: %v", err)
 	}
 	return nil
@@ -140,11 +136,7 @@ func (cache *Cache) WriteBack() {
 func (cache *Cache) Delete(key string) error {
 	cache.lfu.Delete(key)
 
-	err := cache.db.Update(func(txn *badger.Txn) error {
-		return txn.Delete([]byte(cache.prefix + key))
-	})
-
-	return err
+	return cache.db.Del([]byte(cache.prefix + key))
 }
 
 func (cache *Cache) Get(key string) (interface{}, error) {
@@ -157,27 +149,10 @@ func (cache *Cache) Get(key string) (interface{}, error) {
 	logrus.WithField("key", key).Debug("lfu miss")
 	metrics.Count(cache.missCounter, 1)
 
-	var copied []byte
-	// read the value from badger
-	if err := cache.db.View(func(txn *badger.Txn) error {
-		item, err := txn.Get([]byte(cache.prefix + key))
-		if err != nil {
-			if err == badger.ErrKeyNotFound {
-				return nil
-			}
-
-			return fmt.Errorf("read from badger: %v", err)
-		}
-
-		if err := item.Value(func(val []byte) error {
-			copied = append([]byte{}, val...)
-			return nil
-		}); err != nil {
-			return fmt.Errorf("retrieve value from item: %v", err)
-		}
-		return nil
-	}); err != nil {
-		return nil, fmt.Errorf("badger view: %v", err)
+	// read the value from db
+	copied, err := cache.db.Get([]byte(cache.prefix + key))
+	if err != nil {
+		return nil, fmt.Errorf("read key: %v", err)
 	}
 
 	// if it's not found from badger, create a new object
@@ -195,7 +170,7 @@ func (cache *Cache) Get(key string) (interface{}, error) {
 
 	// deserialize the object from storage
 	metrics.Count(cache.storageReadCounter, 1)
-	val, err := cache.FromBytes(key, copied)
+	val, err = cache.FromBytes(key, copied)
 	if err != nil {
 		return nil, fmt.Errorf("deserialize the object: %v", err)
 	}

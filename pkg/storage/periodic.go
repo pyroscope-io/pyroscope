@@ -4,7 +4,6 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/dgraph-io/badger/v2"
 	"github.com/sirupsen/logrus"
 
 	"github.com/pyroscope-io/pyroscope/pkg/util/metrics"
@@ -27,17 +26,6 @@ func (s *Storage) periodicTask(interval time.Duration, cb func()) {
 			default:
 				cb()
 				timer.Reset(interval)
-			}
-		}
-	}
-}
-
-func (*Storage) badgerGCTask(db *badger.DB) func() {
-	return func() {
-		logrus.Debug("starting badger garbage collection")
-		for {
-			if err := db.RunValueLogGC(0.7); err != nil {
-				return
 			}
 		}
 	}

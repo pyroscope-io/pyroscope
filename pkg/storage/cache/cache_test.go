@@ -3,13 +3,11 @@ package cache
 import (
 	"fmt"
 	"log"
-	"os"
 	"path/filepath"
 
-	"github.com/dgraph-io/badger/v2"
-	"github.com/dgraph-io/badger/v2/options"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/pyroscope-io/pyroscope/pkg/storage/kv/badger"
 	"github.com/pyroscope-io/pyroscope/pkg/testing"
 )
 
@@ -17,15 +15,9 @@ var _ = Describe("cache", func() {
 	It("works properly", func(done Done) {
 		tdir := testing.TmpDirSync()
 		badgerPath := filepath.Join(tdir.Path)
-		err := os.MkdirAll(badgerPath, 0o755)
-		Expect(err).ToNot(HaveOccurred())
-
-		badgerOptions := badger.DefaultOptions(badgerPath)
-		badgerOptions = badgerOptions.WithTruncate(false)
-		badgerOptions = badgerOptions.WithSyncWrites(false)
-		badgerOptions = badgerOptions.WithCompression(options.ZSTD)
-
-		db, err := badger.Open(badgerOptions)
+		db, err := badger.NewService(&badger.Config{
+			StoragePath: badgerPath,
+		})
 		Expect(err).ToNot(HaveOccurred())
 
 		cache := New(db, "prefix:", "test_cache")
