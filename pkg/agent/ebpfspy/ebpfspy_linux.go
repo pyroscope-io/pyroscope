@@ -21,7 +21,7 @@ type EbpfSpy struct {
 	stopCh chan struct{}
 }
 
-func Start(pid int) (spy.Spy, error) {
+func Start(pid int, _ spy.ProfileType, _ uint32, _ bool) (spy.Spy, error) {
 	s := newSession(pid)
 	err := s.Start()
 	if err != nil {

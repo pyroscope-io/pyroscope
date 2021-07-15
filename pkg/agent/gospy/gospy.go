@@ -1,3 +1,5 @@
+// +build !nogospy
+
 package gospy
 
 import (
@@ -42,7 +44,7 @@ func startCPUProfile(w io.Writer, hz uint32) error {
 	return custom_pprof.StartCPUProfile(w, hz)
 }
 
-func Start(profileType spy.ProfileType, sampleRate uint32, disableGCRuns bool) (spy.Spy, error) {
+func Start(_ int, profileType spy.ProfileType, sampleRate uint32, disableGCRuns bool) (spy.Spy, error) {
 	s := &GoSpy{
 		stopCh:        make(chan struct{}),
 		buf:           &bytes.Buffer{},

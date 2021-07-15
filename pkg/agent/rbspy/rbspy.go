@@ -33,7 +33,7 @@ type RbSpy struct {
 	pid int
 }
 
-func Start(pid int) (spy.Spy, error) {
+func Start(pid int, _ spy.ProfileType, _ uint32, _ bool) (spy.Spy, error) {
 	dataBuf := make([]byte, bufferLength)
 	dataPtr := unsafe.Pointer(&dataBuf[0])
 

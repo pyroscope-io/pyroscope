@@ -12,7 +12,7 @@ type DebugSpy struct {
 	pid int
 }
 
-func Start(pid int) (spy.Spy, error) {
+func Start(pid int, _ spy.ProfileType, _ uint32, _ bool) (spy.Spy, error) {
 	return &DebugSpy{
 		pid: pid,
 	}, nil

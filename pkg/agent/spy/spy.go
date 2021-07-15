@@ -51,7 +51,8 @@ func (t ProfileType) AggregationType() string {
 	return "sum"
 }
 
-type spyIntitializer func(pid int) (Spy, error)
+// TODO: this interface is not the best as different spies have different arguments
+type spyIntitializer func(pid int, profileType ProfileType, sampleRate uint32, disableGCRuns bool) (Spy, error)
 
 var (
 	supportedSpiesMap map[string]spyIntitializer
@@ -84,11 +85,12 @@ func RegisterSpy(name string, cb spyIntitializer) {
 	supportedSpiesMap[name] = cb
 }
 
-func SpyFromName(name string, pid int) (Spy, error) {
+func StartFunc(name string) (spyIntitializer, error) {
 	if s, ok := supportedSpiesMap[name]; ok {
-		return s(pid)
+		return s, nil
 	}
 	return nil, fmt.Errorf("unknown spy \"%s\". Make sure it's supported (run `pyroscope version` to check if your version supports it)", name)
+
 }
 
 func ResolveAutoName(s string) string {

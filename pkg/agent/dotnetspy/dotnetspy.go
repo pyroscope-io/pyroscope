@@ -15,7 +15,7 @@ func init() {
 	spy.RegisterSpy("dotnetspy", Start)
 }
 
-func Start(pid int) (spy.Spy, error) {
+func Start(pid int, _ spy.ProfileType, _ uint32, _ bool) (spy.Spy, error) {
 	s := newSession(pid)
 	_ = s.start()
 	return &DotnetSpy{session: s}, nil
