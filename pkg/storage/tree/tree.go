@@ -50,7 +50,7 @@ var (
 )
 
 type Tree struct {
-	m    sync.RWMutex
+	sync.RWMutex
 	root *treeNode
 }
 
@@ -62,13 +62,12 @@ func New() *Tree {
 
 func (t *Tree) Merge(srcTrieI merge.Merger) {
 	srcTrie := srcTrieI.(*Tree)
-	srcNodes := []*treeNode{srcTrie.root}
-	dstNodes := []*treeNode{t.root}
 
-	srcTrie.m.RLock()
-	defer srcTrie.m.RUnlock()
-	t.m.Lock()
-	defer t.m.Unlock()
+	srcNodes := make([]*treeNode, 0, 100)
+	srcNodes = append(srcNodes, srcTrie.root)
+
+	dstNodes := make([]*treeNode, 0, 100)
+	dstNodes = append(dstNodes, t.root)
 
 	for len(srcNodes) > 0 {
 		st := srcNodes[0]
@@ -82,16 +81,36 @@ func (t *Tree) Merge(srcTrieI merge.Merger) {
 
 		for _, srcChildNode := range st.ChildrenNodes {
 			dstChildNode := dt.insert(srcChildNode.Name)
-
-			srcNodes = append([]*treeNode{srcChildNode}, srcNodes...)
-			dstNodes = append([]*treeNode{dstChildNode}, dstNodes...)
+			srcNodes = prepend(srcNodes, srcChildNode)
+			dstNodes = prepend(dstNodes, dstChildNode)
 		}
 	}
 }
 
+func prepend(s []*treeNode, x *treeNode) []*treeNode {
+	if len(s) != 0 && s[0] == x {
+		return s
+	}
+	prev := x
+	for i, elem := range s {
+		switch {
+		case i == 0:
+			s[0] = x
+			prev = elem
+		case elem == x:
+			s[i] = prev
+			return s
+		default:
+			s[i] = prev
+			prev = elem
+		}
+	}
+	return append(s, prev)
+}
+
 func (t *Tree) String() string {
-	t.m.RLock()
-	defer t.m.RUnlock()
+	t.RLock()
+	defer t.RUnlock()
 
 	res := ""
 	t.iterate(func(k []byte, v uint64) {
@@ -118,9 +137,6 @@ func (n *treeNode) insert(targetLabel []byte) *treeNode {
 }
 
 func (t *Tree) Insert(key []byte, value uint64, _ ...bool) {
-	t.m.Lock()
-	defer t.m.Unlock()
-
 	// TODO: can optimize this, split is not necessary?
 	labels := bytes.Split(key, []byte(";"))
 	node := t.root
@@ -180,8 +196,8 @@ func (t *Tree) Samples() uint64 {
 }
 
 func (t *Tree) Clone(r *big.Rat) *Tree {
-	t.m.RLock()
-	defer t.m.RUnlock()
+	t.RLock()
+	defer t.RUnlock()
 
 	m := uint64(r.Num().Int64())
 	d := uint64(r.Denom().Int64())
@@ -193,8 +209,7 @@ func (t *Tree) Clone(r *big.Rat) *Tree {
 }
 
 func (t *Tree) MarshalJSON() ([]byte, error) {
-	t.m.RLock()
-	defer t.m.RUnlock()
-
+	t.RLock()
+	defer t.RUnlock()
 	return json.Marshal(t.root)
 }

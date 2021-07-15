@@ -14,8 +14,8 @@ import (
 const currentVersion = 1
 
 func (t *Tree) Serialize(d *dict.Dict, maxNodes int, w io.Writer) error {
-	t.m.RLock()
-	defer t.m.RUnlock()
+	t.RLock()
+	defer t.RUnlock()
 
 	varint.Write(w, currentVersion)
 
@@ -57,8 +57,8 @@ func (t *Tree) Serialize(d *dict.Dict, maxNodes int, w io.Writer) error {
 }
 
 func (t *Tree) SerializeNoDict(maxNodes int, w io.Writer) error {
-	t.m.RLock()
-	defer t.m.RUnlock()
+	t.RLock()
+	defer t.RUnlock()
 
 	nodes := []*treeNode{t.root}
 	minVal := t.minValue(maxNodes)

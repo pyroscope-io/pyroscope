@@ -14,7 +14,7 @@ const currentVersion = 1
 func (s *Dimension) Serialize(w io.Writer) error {
 	varint.Write(w, currentVersion)
 
-	for _, k := range s.keys {
+	for _, k := range s.Keys {
 		varint.Write(w, uint64(len(k)))
 		w.Write([]byte(k))
 	}
@@ -46,7 +46,7 @@ func Deserialize(r io.Reader) (*Dimension, error) {
 			return nil, err
 		}
 
-		s.keys = append(s.keys, Key(keyBuf))
+		s.Keys = append(s.Keys, Key(keyBuf))
 	}
 
 	return s, nil

@@ -28,6 +28,8 @@ const (
 	doneParserState
 )
 
+func NewKey(labels map[string]string) *Key { return &Key{labels: labels} }
+
 // TODO: should rewrite this at some point to not rely on regular expressions & splits
 func ParseKey(name string) (*Key, error) {
 	k := &Key{
@@ -99,24 +101,28 @@ func (k *Key) SegmentKey() string {
 	return k.Normalized()
 }
 
+func segmentKeyToTreeKey(k string, depth int, t time.Time) string {
+	return k + ":" + strconv.Itoa(depth) + ":" + strconv.Itoa(int(t.Unix()))
+}
+
 func (k *Key) TreeKey(depth int, t time.Time) string {
-	return k.Normalized() + ":" + strconv.Itoa(depth) + ":" + strconv.Itoa(int(t.Unix()))
+	return segmentKeyToTreeKey(k.Normalized(), depth, t)
 }
 
 func (k *Key) DictKey() string {
-	return k.Normalized()
+	return k.labels["__name__"]
 }
 
-// FromTreeToDictKey returns app name from tree key k: given tree key
+// fromTreeToDictKey returns app name from tree key k: given tree key
 // "foo{}:0:-62135596790", the call returns "foo".
 //
 // Before tags support, segment key form (i.e. app name + tags: foo{key=value})
 // has been used to reference a dictionary (trie).
-func FromTreeToDictKey(k string) string {
+func fromTreeToDictKey(k string) string {
 	return k[0:strings.IndexAny(k, "{")]
 }
 
-func FromTreeToMainKey(k string) string {
+func fromTreeToMainKey(k string) string {
 	i := strings.LastIndex(k, ":")
 	i = strings.LastIndex(k[:i-1], ":")
 	return k[:i]

@@ -46,15 +46,15 @@ var _ = Describe("cache", func() {
 		}
 		log.Printf("size: %d", cache.Len())
 
-		v, err := cache.Get("foo-199")
+		v, err := cache.GetOrCreate("foo-199")
 		Expect(err).ToNot(HaveOccurred())
 		Expect(v).To(Equal("bar-199"))
 
-		v, err = cache.Get("foo-1")
+		v, err = cache.GetOrCreate("foo-1")
 		Expect(err).ToNot(HaveOccurred())
 		Expect(v).To(Equal("bar-1"))
 
-		v, err = cache.Get("foo-1234")
+		v, err = cache.GetOrCreate("foo-1234")
 		Expect(err).ToNot(HaveOccurred())
 		Expect(v).To(Equal("foo-1234"))
 		cache.Flush()

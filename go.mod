@@ -4,7 +4,6 @@ go 1.14
 
 require (
 	github.com/StackExchange/wmi v0.0.0-20210224194228-fe8f1750fd46 // indirect
-	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/aybabtme/rgbterm v0.0.0-20170906152045-cc83f3b3ce59
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/cheggaaa/pb/v3 v3.0.5
@@ -13,7 +12,7 @@ require (
 	github.com/creack/pty v1.1.11 // indirect
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dgraph-io/badger/v2 v2.2007.2
-	github.com/dgrijalva/lfu-go v0.0.0-20141010002404-f174e76c5138
+	github.com/dgrijalva/lfu-go v0.0.0-00010101000000-000000000000
 	github.com/fatih/color v1.10.0
 	github.com/felixge/fgprof v0.9.1
 	github.com/go-ole/go-ole v1.2.5 // indirect
@@ -57,4 +56,4 @@ require (
 
 replace github.com/mgechev/revive v1.0.3 => github.com/pyroscope-io/revive v1.0.6-0.20210330033039-4a71146f9dc1
 
-replace github.com/dgrijalva/lfu-go => github.com/pyroscope-io/lfu-go v1.0.3
+replace github.com/dgrijalva/lfu-go => github.com/pyroscope-io/lfu-go v1.0.4-0.20210705073127-18ae647b0d6e
